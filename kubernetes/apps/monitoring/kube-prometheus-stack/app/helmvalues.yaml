@@ -3,7 +3,6 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: kube-prometheus-stack-values
-  namespace: monitoring
 data:
   values.yaml: |
     crds:
@@ -61,7 +60,7 @@ data:
             regex: (apiserver_response_sizes_bucket|apiserver_watch_events_sizes_bucket)
     kubeControllerManager:
       enabled: true
-      endpoints:
+      endpoints: &endpoints
         - 192.168.1.70
         - 192.168.1.71
         - 192.168.1.72
@@ -73,16 +72,10 @@ data:
             regex: "(apiserver_audit|apiserver_client|apiserver_delegated|apiserver_envelope|apiserver_storage|apiserver_webhooks|attachdetach_controller|authenticated_user|authentication|cronjob_controller|disabled_metric|endpoint_slice|ephemeral_volume|garbagecollector_controller|get_token|go|hidden_metric|job_controller|kubernetes_build|kubernetes_feature|leader_election|node_collector|node_ipam|process_cpu|process_max|process_open|process_resident|process_start|process_virtual|pv_collector|registered_metric|replicaset_controller|rest_client|retroactive_storageclass|root_ca|running_managed|scrape_duration|scrape_samples|scrape_series|service_controller|storage_count|storage_operation|ttl_after|volume_operation|workqueue)_(.+)"
     kubeEtcd:
       enabled: true
-      endpoints:
-        - 192.168.1.70
-        - 192.168.1.71
-        - 192.168.1.72
+      endpoints: *endpoints
     kubeScheduler:
       enabled: true
-      endpoints:
-        - 192.168.1.70
-        - 192.168.1.71
-        - 192.168.1.72
+      endpoints: *endpoints
       serviceMonitor:
         metricRelabelings:
           # Remove duplicate labels provided by k3s
@@ -116,7 +109,7 @@ data:
         storageSpec:
           volumeClaimTemplate:
             spec:
-              storageClassName: local-path
+              storageClassName: local-hostpath
               resources:
                 requests:
                   storage: 10Gi
