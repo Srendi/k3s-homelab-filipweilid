@@ -1,3 +1,5 @@
+# Based on this [template](https://github.com/onedr0p/flux-cluster-template)
+
 # Deploy a Kubernetes cluster backed by Flux
 
 Welcome to my highly opinionated template for deploying a single Kubernetes ([k3s](https://k3s.io) or [k0s](https://github.com/k0sproject/k0s)) cluster with [Ansible](https://www.ansible.com) and using [Flux](https://toolkit.fluxcd.io) to manage its state.
