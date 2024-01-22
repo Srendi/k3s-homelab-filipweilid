@@ -25,6 +25,9 @@ spec:
   uninstall:
     keepHistory: false
   values:
+    defaultPodOptions:
+      nodeSelector:
+        beta.kubernetes.io/arch: amd64
     controllers:
       main:
         annotations:
