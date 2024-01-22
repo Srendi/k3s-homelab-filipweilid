@@ -58,7 +58,7 @@ spec:
     ingress:
       main:
         enabled: true
-        className: external
+        className: internal
         hosts:
           - host: &host palworld.${SECRET_DOMAIN}
             paths:
@@ -76,5 +76,6 @@ spec:
         storageClass: openebs-hostpath
         type: persistentVolumeClaim
         name: palworld
+        size: 25Gi
         globalMounts:
           - path: /palworld
