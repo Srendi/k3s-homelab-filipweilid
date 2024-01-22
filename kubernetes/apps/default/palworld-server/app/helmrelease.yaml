@@ -68,6 +68,7 @@ spec:
     persistence:
       config:
         enabled: true
+        storageClass: openebs-hostpath
         type: persistentVolumeClaim
         name: palworld
         globalMounts:
