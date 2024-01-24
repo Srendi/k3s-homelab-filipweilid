@@ -41,6 +41,7 @@ spec:
               TZ: "${TIMEZONE}"
               PLAYERS: 16
               COMMUNITY: false
+              MULTITHREADING: true
             envFrom:
               - secretRef:
                   name: palworld-secret
