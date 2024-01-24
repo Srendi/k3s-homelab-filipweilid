@@ -83,14 +83,14 @@ def validate_python_version() -> None:
 
 @required("bootstrap_distribution")
 def validate_cli_tools(distribution: str, **_) -> None:
-    distro = _validate_distribution(distribution)
+    _distribution = _validate_distribution(distribution)
     for tool in GLOBAL_CLI_TOOLS:
         if not which(tool):
             raise ValueError(f"Missing required CLI tool {tool}")
-    for tool in TALOS_CLI_TOOLS if distro == "talos" else []:
+    for tool in TALOS_CLI_TOOLS if _distribution in ["talos"] else []:
         if not which(tool):
             raise ValueError(f"Missing required CLI tool {tool}")
-    for tool in K0S_CLI_TOOLS if distro == "k0s" else []:
+    for tool in K0S_CLI_TOOLS if _distribution in ["k0s"] else []:
         if not which(tool):
             raise ValueError(f"Missing required CLI tool {tool}")
 
@@ -100,14 +100,17 @@ def validate_distribution(distribution: str, **_) -> None:
     _validate_distribution(distribution)
 
 
-@required("bootstrap_github_username", "bootstrap_github_repository_name", "bootstrap_github_repository_branch")
-def validate_github(username: str, repository: str, branch: str, **_) -> None:
+@required("bootstrap_github_username", "bootstrap_github_repository_name", "bootstrap_advanced_flags")
+def validate_github(username: str, repository: str, advanced_flags: dict, **_) -> None:
     try:
-        request = requests.get(f"https://api.github.com/repos/{username}/{repository}/branches/{branch}")
+        request = requests.get(
+            f"https://api.github.com/repos/{username}/{repository}/branches/{advanced_flags.get('github_repository_branch', 'main')}")
         if request.status_code != 200:
-            raise ValueError(f"GitHub repository {username}/{repository} branch {branch} not found")
+            raise ValueError(
+                f"GitHub repository {username}/{repository} branch {advanced_flags.get('github_repository_branch', 'main')} not found")
     except requests.exceptions.RequestException as e:
-        raise ValueError(f"GitHub repository {username}/{repository} branch {branch} not found") from e
+        raise ValueError(
+            f"GitHub repository {username}/{repository} branch {advanced_flags.get('github_repository_branch', 'main')} not found") from e
 
 
 @required("bootstrap_age_public_key")
@@ -122,15 +125,14 @@ def validate_timezone(timezone: str, **_) -> None:
         raise ValueError(f"Invalid timezone {timezone}")
 
 
-@required("bootstrap_ipv6_enabled", "bootstrap_cluster_cidr", "bootstrap_service_cidr")
-def validate_cluster_cidrs(ipv6_enabled: bool, cluster_cidr: str, service_cidr: str, **_) -> None:
-    if not isinstance(ipv6_enabled, bool):
-        raise ValueError(f"Invalid IPv6 enabled {ipv6_enabled}")
+@required("bootstrap_cluster_cidr", "bootstrap_service_cidr", "bootstrap_advanced_flags")
+def validate_cluster_cidrs(cluster_cidr: str, service_cidr: str, advanced_flags: dict, **_) -> None:
+    dual_stack_ipv4_first = advanced_flags.get("dual_stack_ipv4_first", False)
 
     if cluster_cidr == service_cidr:
         raise ValueError(f"Cluster CIDR {cluster_cidr} is the same as service CIDR {service_cidr}")
 
-    if ipv6_enabled:
+    if dual_stack_ipv4_first:
         if len(cluster_cidr.split(",")) != 2:
             raise ValueError(f"Invalid cluster CIDR {cluster_cidr}")
         if len(service_cidr.split(",")) != 2:
@@ -240,18 +242,27 @@ def validate_nodes(node_cidr: str, nodes: dict[list], distribution: str, **_) ->
         _validate_node(node, node_cidr, distribution)
 
 
+def massage(data: dict) -> dict:
+    data["bootstrap_advanced_flags"] = data.get("bootstrap_advanced_flags", {})
+    return data
+
 def validate(data: dict) -> None:
+    user_data = massage(data)
+
     validate_python_version()
-    validate_cli_tools(data)
-    validate_distribution(data)
-    if not data.get("bootstrap_private_github_repo"):
-        validate_github(data)
-    validate_age(data)
-    validate_timezone(data)
-    validate_acme_email(data)
-    validate_flux_github_webhook_token(data)
-    validate_cloudflare(data)
-    validate_host_network(data)
-    validate_bootstrap_dns_server(data)
-    validate_cluster_cidrs(data)
-    validate_nodes(data)
+    validate_cli_tools(user_data)
+    validate_distribution(user_data)
+    validate_age(user_data)
+    validate_timezone(user_data)
+    validate_bootstrap_dns_server(user_data)
+    validate_cluster_cidrs(user_data)
+    validate_flux_github_webhook_token(user_data)
+    validate_host_network(user_data)
+    validate_acme_email(user_data)
+
+    if not user_data.get("bootstrap_private_github_repo"):
+        validate_github(user_data)
+
+    if not user_data.get("skip_tests", False):
+        validate_cloudflare(user_data)
+        validate_nodes(user_data)

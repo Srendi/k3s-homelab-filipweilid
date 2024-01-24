@@ -15,7 +15,7 @@
       block:
         - name: Locale | Set timezone
           community.general.timezone:
-            name: "{{ timezone | default('Etc/UTC') }}"
+            name: "Europe/Copenhagen"
 
     - name: Packages
       block:
@@ -32,7 +32,7 @@
         - name: User Configuration | SSH keys
           ansible.posix.authorized_key:
             user: "{{ ansible_user }}"
-            key: "https://github.com/{{ github_username }}.keys"
+            key: "https://github.com/filipweilid.keys"
         - name: User Configuration | Silence login
           ansible.builtin.file:
             dest: "{{ '/home/' + ansible_user if ansible_user != 'root' else '/root' }}/.hushlogin"
@@ -61,6 +61,24 @@
               ff02::2 ip6-allrouters
             dest: /etc/hosts
             mode: preserve
+        # https://github.com/onedr0p/flux-cluster-template/discussions/635
+        - name: Network Configuration | Remove immutable flag from /etc/resolv.conf
+          ansible.builtin.file:
+            attributes: -i
+            path: /etc/resolv.conf
+        - name: Network Configuration | Remove /etc/resolv.conf
+          ansible.builtin.file:
+            attributes: -i
+            path: /etc/resolv.conf
+            state: absent
+        - name: Network Configuration | Add custom /etc/resolv.conf
+          ansible.builtin.copy:
+            attributes: +i
+            mode: '0644'
+            dest: /etc/resolv.conf
+            content: |
+              search .
+              nameserver 1.1.1.1
 
     - name: System Configuration
       notify: Reboot
