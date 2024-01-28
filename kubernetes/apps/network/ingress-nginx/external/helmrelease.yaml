@@ -2,14 +2,13 @@
 apiVersion: helm.toolkit.fluxcd.io/v2beta2
 kind: HelmRelease
 metadata:
-  name: nginx-internal
-  namespace: &namespace network
+  name: ingress-nginx-external
 spec:
   interval: 30m
   chart:
     spec:
       chart: ingress-nginx
-      version: 4.9.0
+      version: 4.9.1
       sourceRef:
         kind: HelmRepository
         name: ingress-nginx
@@ -23,25 +22,28 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
+  dependsOn:
+    - name: cloudflared
+      namespace: network
   values:
-    fullnameOverride: nginx-internal
+    fullnameOverride: ingress-nginx-external
     controller:
       replicaCount: 1
       service:
         annotations:
-          external-dns.alpha.kubernetes.io/hostname: "internal.${SECRET_DOMAIN}"
-          io.cilium/lb-ipam-ips: "192.168.1.130"
+          external-dns.alpha.kubernetes.io/hostname: "external.${SECRET_DOMAIN}"
+          io.cilium/lb-ipam-ips: "192.168.1.120"
         externalTrafficPolicy: Cluster
       ingressClassResource:
-        name: internal
-        default: true
-        controllerValue: k8s.io/internal
+        name: external
+        default: false
+        controllerValue: k8s.io/external
       admissionWebhooks:
         objectSelector:
           matchExpressions:
             - key: ingress-class
               operator: In
-              values: ["internal"]
+              values: ["external"]
       config:
         client-body-buffer-size: 100M
         client-body-timeout: 120
@@ -61,12 +63,6 @@ spec:
         proxy-body-size: 0
         proxy-buffer-size: 16k
         ssl-protocols: TLSv1.3 TLSv1.2
-      metrics:
-        enabled: true
-        serviceMonitor:
-          enabled: true
-          namespaceSelector:
-            any: true
       extraArgs:
         default-ssl-certificate: "network/${SECRET_DOMAIN/./-}-production-tls"
       topologySpreadConstraints:
@@ -76,7 +72,7 @@ spec:
           labelSelector:
             matchLabels:
               app.kubernetes.io/name: ingress-nginx
-              app.kubernetes.io/instance: nginx-internal
+              app.kubernetes.io/instance: ingress-nginx-external
               app.kubernetes.io/component: controller
       resources:
         requests:
