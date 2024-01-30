@@ -27,7 +27,6 @@ The features included will depend on the type of configuration you want to use. 
 - A [Renovate](https://www.mend.io/renovate)-ready repository with pull request diffs provided by [flux-local](https://github.com/allenporter/flux-local)
 - Integrated [GitHub Actions](https://github.com/features/actions) with helpful workflows.
 
-
 ## 💻 Machine Preparation
 
 Hopefully some of this peeked your interests! If you are marching forward, now is a good time to choose whether you will deploy a Kubernetes cluster with [k0s](https://github.com/k0sproject/k0s), [k3s](https://github.com/k3s-io/k3s) or [Talos](https://github.com/siderolabs/talos).
@@ -104,7 +103,6 @@ Hopefully some of this peeked your interests! If you are marching forward, now i
 
 <details>
 <summary><i>Click <b>here</b> to read about using a RasPi4</i></summary>
-
 
 > [!IMPORTANT]
 >
@@ -395,7 +393,7 @@ You have two different options for setting up your local workstation.
 
 ### 🔹 Stage 6: Install Flux in your cluster
 
-> [!IMPORTANT]
+> [!NOTE]
 > Skip this stage if you have **disabled** Flux in the `config.yaml`
 
 1. Verify Flux can be installed
@@ -410,12 +408,15 @@ You have two different options for setting up your local workstation.
 
 2. Install Flux and sync the cluster to the Git repository
 
-   ```sh
-   task flux:bootstrap
-   # namespace/flux-system configured
-   # customresourcedefinition.apiextensions.k8s.io/alerts.notification.toolkit.fluxcd.io created
-   # ...
-   ```
+> [!IMPORTANT]
+> Run `task flux:github-deploy-key` first if using a private repository.
+
+```sh
+task flux:bootstrap
+# namespace/flux-system configured
+# customresourcedefinition.apiextensions.k8s.io/alerts.notification.toolkit.fluxcd.io created
+# ...
+```
 
 3. Verify Flux components are running in the cluster
 
@@ -584,95 +585,6 @@ To browse or get ideas on applications people are running, community member [@wh
 
 The included CSI (openebs in local-hostpath mode) is a great start for storage but soon you might find you need more features like replicated block storage, or to connect to a NFS/SMB/iSCSI server. If you need any of those features be sure to check out the projects like [rook-ceph](https://github.com/rook/rook), [longhorn](https://github.com/longhorn/longhorn), [openebs](https://github.com/openebs/openebs), [democratic-csi](https://github.com/democratic-csi/democratic-csi), [csi-driver-nfs](https://github.com/kubernetes-csi/csi-driver-nfs),
 and [synology-csi](https://github.com/SynologyOpenSource/synology-csi).
-
-#### Authenticate Flux over SSH
-
-<details>
-<summary><i>Click <b>here</b> to read guide on adding Flux SSH authentication</i></summary>
-
-Authenticating Flux to your git repository has a couple benefits like using a private git repository and/or using the Flux [Image Automation Controllers](https://fluxcd.io/docs/components/image/).
-
-By default this template only works on a public Github repository, it is advised to keep your repository public.
-
-The benefits of a public repository include:
-
-- Debugging or asking for help, you can provide a link to a resource you are having issues with.
-- Adding a topic to your repository of `kubesearch` to be included in the [Kubesearch](https://kubesearch.dev) results. This search helps people discover different configurations of Helm charts across others Flux based repositories.
-
-1. Generate new SSH key:
-
-   ```sh
-   ssh-keygen -t ecdsa -b 521 -C "github-deploy-key" -f ./kubernetes/bootstrap/github-deploy.key -q -P ""
-   ```
-
-2. Paste public key in the deploy keys section of your repository settings
-3. Create sops secret in `./kubernetes/bootstrap/github-deploy-key.sops.yaml` with the contents of:
-
-   ```yaml
-   apiVersion: v1
-   kind: Secret
-   metadata:
-     name: github-deploy-key
-     namespace: flux-system
-   stringData:
-     # 3a. Contents of github-deploy-key
-     identity: |
-       -----BEGIN OPENSSH PRIVATE KEY-----
-           ...
-       -----END OPENSSH PRIVATE KEY-----
-     # 3b. Output of curl --silent https://api.github.com/meta | jq --raw-output '"github.com "+.ssh_keys[]'
-     known_hosts: |
-       github.com ssh-ed25519 ...
-       github.com ecdsa-sha2-nistp256 ...
-       github.com ssh-rsa ...
-   ```
-
-4. Encrypt secret:
-
-   ```sh
-   sops --encrypt --in-place ./kubernetes/bootstrap/github-deploy-key.sops.yaml
-   ```
-
-5. Apply secret to cluster:
-
-   ```sh
-   sops --decrypt ./kubernetes/bootstrap/github-deploy-key.sops.yaml | kubectl apply -f -
-   ```
-
-6. Update `./kubernetes/flux/config/cluster.yaml`:
-
-   ```yaml
-   apiVersion: source.toolkit.fluxcd.io/v1beta2
-   kind: GitRepository
-   metadata:
-     name: home-kubernetes
-     namespace: flux-system
-   spec:
-     interval: 10m
-     # 6a: Change this to your user and repo names
-     url: ssh://git@github.com/$user/$repo
-     ref:
-       branch: main
-     secretRef:
-       name: github-deploy-key
-   ```
-
-7. Commit and push changes
-8. Force flux to reconcile your changes
-
-   ```sh
-   flux reconcile -n flux-system kustomization cluster --with-source
-   ```
-
-9. Verify git repository is now using SSH:
-
-   ```sh
-   flux get sources git -A
-   ```
-
-10. Optionally set your repository to Private in your repository settings.
-
-</details>
 
 ## 🙌 Related Projects
 
