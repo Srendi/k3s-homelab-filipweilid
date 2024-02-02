@@ -107,7 +107,7 @@ Hopefully some of this peeked your interests! If you are marching forward, now i
 <details>
 <summary><i>Click <b>here</b> to read about using a RasPi4</i></summary>
 
-> [!IMPORTANT]
+> [!NOTE]
 >
 > 1. It is recommended to have an 8GB RasPi model. Most important is to **boot from an external SSD/NVMe** rather than an SD card. This is [supported natively](https://www.raspberrypi.com/documentation/computers/raspberry-pi.html), however if you have an early model you may need to [update the bootloader](https://www.tomshardware.com/how-to/boot-raspberry-pi-4-usb) first.
 > 2. Check the [power requirements](https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#power-supply) if using a PoE Hat and a SSD/NVMe dongle.
@@ -247,7 +247,7 @@ You have two different options for setting up your local workstation.
 
 ### ⚡ Stage 4: Prepare your nodes for Kubernetes
 
-> [!IMPORTANT]
+> [!NOTE]
 > For **Talos** or **k0s** skip ahead to ⛵ [**Stage 5**](#-stage-5-install-kubernetes)
 
 #### k3s
@@ -357,7 +357,7 @@ You have two different options for setting up your local workstation.
 
 2. Install Flux and sync the cluster to the Git repository
 
-> [!IMPORTANT]
+> [!NOTE]
 > Run `task flux:github-deploy-key` first if using a private repository.
 
 ```sh
@@ -433,7 +433,7 @@ By default this template will deploy a wildcard certificate using the Let's Encr
 
 By default Flux will periodically check your git repository for changes. In order to have Flux reconcile on `git push` you must configure Github to send `push` events to Flux.
 
-> [!IMPORTANT]
+> [!NOTE]
 > This will only work after you have switched over certificates to the Let's Encrypt Production servers.
 
 1. Obtain the webhook path
