@@ -4,4 +4,3 @@ kind: Kustomization
 resources:
   - ./namespace.yaml
   - ./descheduler/ks.yaml
-  - ./system-upgrade-controller/ks.yaml
