@@ -61,7 +61,6 @@
             dest: /etc/resolv.conf
             content: |
               search .
-              nameserver 1.1.1.1
 
     - name: System Configuration
       notify: Reboot

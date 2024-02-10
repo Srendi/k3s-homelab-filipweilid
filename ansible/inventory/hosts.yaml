@@ -1,7 +1,7 @@
 ---
 kubernetes:
   children:
-    master:
+    controllers:
       hosts:
         "archonei":
           ansible_user: "hadmin"
@@ -12,7 +12,7 @@ kubernetes:
         "vermithrax":
           ansible_user: "hadmin"
           ansible_host: "192.168.1.72"
-    worker:
+    workers:
       hosts:
         "saphira":
           ansible_user: "hadmin"
